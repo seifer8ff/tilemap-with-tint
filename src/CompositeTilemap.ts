@@ -1,10 +1,10 @@
-import { Container } from '@pixi/display';
-import { Texture, Renderer, BaseTexture, Matrix } from '@pixi/core';
-import { Tilemap } from './Tilemap';
-import { settings } from './settings';
-import { CanvasTileRenderer } from './CanvasTileRenderer';
+import { Container } from "@pixi/display";
+import { Texture, Renderer, BaseTexture, Matrix } from "@pixi/core";
+import { Tilemap } from "./Tilemap";
+import { settings } from "./settings";
+import { CanvasTileRenderer } from "./CanvasTileRenderer";
 
-import type { TileRenderer } from './TileRenderer';
+import type { TileRenderer } from "./TileRenderer";
 
 /**
  * A tilemap composite that lazily builds tilesets layered into multiple tilemaps.
@@ -63,8 +63,7 @@ import type { TileRenderer } from './TileRenderer';
  *      globalTilemap.tile('bomb.png', x * 100, y * 100);
  * });
  */
-export class CompositeTilemap extends Container
-{
+export class CompositeTilemap extends Container {
     /** The hard limit on the number of tile textures used in each tilemap. */
     public readonly texturesPerTilemap: number;
 
@@ -92,8 +91,7 @@ export class CompositeTilemap extends Container
      *  tilemaps. This is only an performance optimization, and using {@link CompositeTilemap.tile tile}
      *  will work equivalently.
      */
-    constructor(tileset?: Array<BaseTexture>)
-    {
+    constructor(tileset?: Array<BaseTexture>) {
         super();
 
         this.tileset(tileset);
@@ -108,10 +106,8 @@ export class CompositeTilemap extends Container
      *
      * @param tileTextures - The list of tile textures that make up the tileset.
      */
-    tileset(tileTextures: Array<BaseTexture>): this
-    {
-        if (!tileTextures)
-        {
+    tileset(tileTextures: Array<BaseTexture>): this {
+        if (!tileTextures) {
             tileTextures = [];
         }
 
@@ -119,15 +115,15 @@ export class CompositeTilemap extends Container
         const len1 = this.children.length;
         const len2 = Math.ceil(tileTextures.length / texPerChild);
 
-        for (let i = 0; i < Math.min(len1, len2); i++)
-        {
+        for (let i = 0; i < Math.min(len1, len2); i++) {
             (this.children[i] as Tilemap).setTileset(
                 tileTextures.slice(i * texPerChild, (i + 1) * texPerChild)
             );
         }
-        for (let i = len1; i < len2; i++)
-        {
-            const tilemap = new Tilemap(tileTextures.slice(i * texPerChild, (i + 1) * texPerChild));
+        for (let i = len1; i < len2; i++) {
+            const tilemap = new Tilemap(
+                tileTextures.slice(i * texPerChild, (i + 1) * texPerChild)
+            );
 
             tilemap.compositeParent = true;
             tilemap.offsetX = settings.TEXTILE_DIMEN;
@@ -141,10 +137,8 @@ export class CompositeTilemap extends Container
     }
 
     /** Clears the tilemap composite. */
-    clear(): this
-    {
-        for (let i = 0; i < this.children.length; i++)
-        {
+    clear(): this {
+        for (let i = 0; i < this.children.length; i++) {
             (this.children[i] as Tilemap).clear();
         }
 
@@ -154,10 +148,8 @@ export class CompositeTilemap extends Container
     }
 
     /** Changes the rotation of the last added tile. */
-    tileRotate(rotate: number): this
-    {
-        if (this.lastModifiedTilemap)
-        {
+    tileRotate(rotate: number): this {
+        if (this.lastModifiedTilemap) {
             this.lastModifiedTilemap.tileRotate(rotate);
         }
 
@@ -165,10 +157,8 @@ export class CompositeTilemap extends Container
     }
 
     /** Changes `animX`, `animCountX` of the last added tile. */
-    tileAnimX(offset: number, count: number): this
-    {
-        if (this.lastModifiedTilemap)
-        {
+    tileAnimX(offset: number, count: number): this {
+        if (this.lastModifiedTilemap) {
             this.lastModifiedTilemap.tileAnimX(offset, count);
         }
 
@@ -176,10 +166,8 @@ export class CompositeTilemap extends Container
     }
 
     /** Changes `animY`, `animCountY` of the last added tile. */
-    tileAnimY(offset: number, count: number): this
-    {
-        if (this.lastModifiedTilemap)
-        {
+    tileAnimY(offset: number, count: number): this {
+        if (this.lastModifiedTilemap) {
             this.lastModifiedTilemap.tileAnimY(offset, count);
         }
 
@@ -187,10 +175,8 @@ export class CompositeTilemap extends Container
     }
 
     /** Changes `tileAnimDivisor` value of the last added tile. */
-    tileAnimDivisor(divisor: number): this
-    {
-        if (this.lastModifiedTilemap)
-        {
+    tileAnimDivisor(divisor: number): this {
+        if (this.lastModifiedTilemap) {
             this.lastModifiedTilemap.tileAnimDivisor(divisor);
         }
 
@@ -219,6 +205,7 @@ export class CompositeTilemap extends Container
      *      per column.
      * @param [options.animDivisor=1] - For animated tiles, this is the animation duration each frame
      * @param [options.alpha=1] - Tile alpha
+     * * @param [options.tint=[255, 255, 255, 1]] - Tile tint [r, g, b, a], where alpha is between 0 and 1.
      * @return This tilemap, good for chaining.
      */
     tile(
@@ -226,91 +213,72 @@ export class CompositeTilemap extends Container
         x: number,
         y: number,
         options: {
-            u?: number,
-            v?: number,
-            tileWidth?: number,
-            tileHeight?: number,
-            animX?: number,
-            animY?: number,
-            rotate?: number,
-            animCountX?: number,
-            animCountY?: number,
-            animDivisor?: number,
-            alpha?: number,
+            u?: number;
+            v?: number;
+            tileWidth?: number;
+            tileHeight?: number;
+            animX?: number;
+            animY?: number;
+            rotate?: number;
+            animCountX?: number;
+            animCountY?: number;
+            animDivisor?: number;
+            alpha?: number;
+            tint?: [number, number, number, number];
         } = {}
-    ): this
-    {
+    ): this {
         let tilemap: Tilemap = null;
         const children = this.children;
 
         this.lastModifiedTilemap = null;
 
-        if (typeof tileTexture === 'number')
-        {
-            const childIndex = tileTexture / this.texturesPerTilemap >> 0;
+        if (typeof tileTexture === "number") {
+            const childIndex = (tileTexture / this.texturesPerTilemap) >> 0;
             let tileIndex = 0;
 
             tilemap = children[childIndex] as Tilemap;
 
-            if (!tilemap)
-            {
+            if (!tilemap) {
                 tilemap = children[0] as Tilemap;
 
                 // Silently fail if the tilemap doesn't exist
                 if (!tilemap) return this;
 
                 tileIndex = 0;
-            }
-            else
-            {
+            } else {
                 tileIndex = tileTexture % this.texturesPerTilemap;
             }
 
-            tilemap.tile(
-                tileIndex,
-                x,
-                y,
-                options,
-            );
-        }
-        else
-        {
-            if (typeof tileTexture === 'string')
-            {
+            tilemap.tile(tileIndex, x, y, options);
+        } else {
+            if (typeof tileTexture === "string") {
                 tileTexture = Texture.from(tileTexture);
             }
 
             // Probe all tilemaps to find which tileset contains the base-texture.
-            for (let i = 0; i < children.length; i++)
-            {
+            for (let i = 0; i < children.length; i++) {
                 const child = children[i] as Tilemap;
                 const tex = child.getTileset();
 
-                for (let j = 0; j < tex.length; j++)
-                {
-                    if (tex[j] === tileTexture.baseTexture)
-                    {
+                for (let j = 0; j < tex.length; j++) {
+                    if (tex[j] === tileTexture.baseTexture) {
                         tilemap = child;
                         break;
                     }
                 }
 
-                if (tilemap)
-                {
+                if (tilemap) {
                     break;
                 }
             }
 
             // If no tileset contains the base-texture, attempt to add it.
-            if (!tilemap)
-            {
+            if (!tilemap) {
                 // Probe the tilemaps to find one below capacity. If so, add the texture into that tilemap.
-                for (let i = children.length - 1; i >= 0; i--)
-                {
+                for (let i = children.length - 1; i >= 0; i--) {
                     const child = children[i] as Tilemap;
 
-                    if (child.getTileset().length < this.texturesPerTilemap)
-                    {
+                    if (child.getTileset().length < this.texturesPerTilemap) {
                         tilemap = child;
                         child.getTileset().push(tileTexture.baseTexture);
                         break;
@@ -318,8 +286,7 @@ export class CompositeTilemap extends Container
                 }
 
                 // Otherwise, create a new tilemap initialized with that tile texture.
-                if (!tilemap)
-                {
+                if (!tilemap) {
                     tilemap = new Tilemap(tileTexture.baseTexture);
                     tilemap.compositeParent = true;
                     tilemap.offsetX = settings.TEXTILE_DIMEN;
@@ -329,12 +296,7 @@ export class CompositeTilemap extends Container
                 }
             }
 
-            tilemap.tile(
-                tileTexture,
-                x,
-                y,
-                options,
-            );
+            tilemap.tile(tileTexture, x, y, options);
         }
 
         this.lastModifiedTilemap = tilemap;
@@ -342,17 +304,14 @@ export class CompositeTilemap extends Container
         return this;
     }
 
-    renderCanvas(renderer: any): void
-    {
-        if (!this.visible || this.worldAlpha <= 0 || !this.renderable)
-        {
+    renderCanvas(renderer: any): void {
+        if (!this.visible || this.worldAlpha <= 0 || !this.renderable) {
             return;
         }
 
         const tilemapPlugin = CanvasTileRenderer.getInstance(renderer);
 
-        if (tilemapPlugin && !tilemapPlugin.dontUseTransform)
-        {
+        if (tilemapPlugin && !tilemapPlugin.dontUseTransform) {
             const wt = this.worldTransform;
 
             renderer.canvasContext.activeContext.setTransform(
@@ -367,19 +326,16 @@ export class CompositeTilemap extends Container
 
         const layers = this.children;
 
-        for (let i = 0; i < layers.length; i++)
-        {
-            const layer = (layers[i] as Tilemap);
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i] as Tilemap;
 
             layer.tileAnim = this.tileAnim;
             layer.renderCanvasCore(renderer);
         }
     }
 
-    render(renderer: Renderer): void
-    {
-        if (!this.visible || this.worldAlpha <= 0 || !this.renderable)
-        {
+    render(renderer: Renderer): void {
+        if (!this.visible || this.worldAlpha <= 0 || !this.renderable) {
             return;
         }
 
@@ -390,7 +346,9 @@ export class CompositeTilemap extends Container
 
         // TODO: dont create new array, please
         this._globalMat = shader.uniforms.projTransMatrix;
-        renderer.globalUniforms.uniforms.projectionMatrix.copyTo(this._globalMat).append(this.worldTransform);
+        renderer.globalUniforms.uniforms.projectionMatrix
+            .copyTo(this._globalMat)
+            .append(this.worldTransform);
         shader.uniforms.shadowColor = this.shadowColor;
         shader.uniforms.animationFrame = this.tileAnim || plugin.tileAnim;
 
@@ -398,8 +356,7 @@ export class CompositeTilemap extends Container
 
         const layers = this.children;
 
-        for (let i = 0; i < layers.length; i++)
-        {
+        for (let i = 0; i < layers.length; i++) {
             (layers[i] as Tilemap).renderWebGLCore(renderer, plugin);
         }
     }
@@ -408,18 +365,14 @@ export class CompositeTilemap extends Container
      * @internal
      * @ignore
      */
-    isModified(anim: boolean): boolean
-    {
+    isModified(anim: boolean): boolean {
         const layers = this.children;
 
-        if (this.modificationMarker !== layers.length)
-        {
+        if (this.modificationMarker !== layers.length) {
             return true;
         }
-        for (let i = 0; i < layers.length; i++)
-        {
-            if ((layers[i] as Tilemap).isModified(anim))
-            {
+        for (let i = 0; i < layers.length; i++) {
+            if ((layers[i] as Tilemap).isModified(anim)) {
                 return true;
             }
         }
@@ -431,13 +384,11 @@ export class CompositeTilemap extends Container
      * @internal
      * @ignore
      */
-    clearModify(): void
-    {
+    clearModify(): void {
         const layers = this.children;
 
         this.modificationMarker = layers.length;
-        for (let i = 0; i < layers.length; i++)
-        {
+        for (let i = 0; i < layers.length; i++) {
             (layers[i] as Tilemap).clearModify();
         }
     }
@@ -455,21 +406,18 @@ export class CompositeTilemap extends Container
         animWidth?: number,
         animHeight?: number,
         animDivisor?: number,
-        alpha?: number
-    ): this
-    {
-        return this.tile(
-            texture,
-            x, y,
-            {
-                animX,
-                animY,
-                animCountX: animWidth,
-                animCountY: animHeight,
-                animDivisor,
-                alpha
-            }
-        );
+        alpha?: number,
+        tint?: [number, number, number, number]
+    ): this {
+        return this.tile(texture, x, y, {
+            animX,
+            animY,
+            animCountX: animWidth,
+            animCountY: animHeight,
+            animDivisor,
+            alpha,
+            tint,
+        });
     }
 
     /**
@@ -490,20 +438,31 @@ export class CompositeTilemap extends Container
         rotate?: number,
         animWidth?: number,
         animHeight?: number
-    ): this
-    {
-        const childIndex: number = textureIndex / this.texturesPerTilemap >> 0;
+    ): this {
+        const childIndex: number =
+            (textureIndex / this.texturesPerTilemap) >> 0;
         const textureId: number = textureIndex % this.texturesPerTilemap;
 
-        if (this.children[childIndex] && (this.children[childIndex] as Tilemap).getTileset())
-        {
-            this.lastModifiedTilemap = (this.children[childIndex] as Tilemap);
+        if (
+            this.children[childIndex] &&
+            (this.children[childIndex] as Tilemap).getTileset()
+        ) {
+            this.lastModifiedTilemap = this.children[childIndex] as Tilemap;
             this.lastModifiedTilemap.addRect(
-                textureId, u, v, x, y, tileWidth, tileHeight, animX, animY, rotate, animWidth, animHeight
+                textureId,
+                u,
+                v,
+                x,
+                y,
+                tileWidth,
+                tileHeight,
+                animX,
+                animY,
+                rotate,
+                animWidth,
+                animHeight
             );
-        }
-        else
-        {
+        } else {
             this.lastModifiedTilemap = null;
         }
 
@@ -522,5 +481,7 @@ export class CompositeTilemap extends Container
      * @readonly
      * @see CompositeTilemap.texturesPerTilemap
      */
-    get texPerChild(): number { return this.texturesPerTilemap; }
+    get texPerChild(): number {
+        return this.texturesPerTilemap;
+    }
 }

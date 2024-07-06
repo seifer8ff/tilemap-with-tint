@@ -1,8 +1,14 @@
-import { BaseTexture, Renderer, Resource, Texture, GLTexture, ALPHA_MODES } from '@pixi/core';
-import { settings } from './settings';
+import {
+    BaseTexture,
+    Renderer,
+    Resource,
+    Texture,
+    GLTexture,
+    ALPHA_MODES,
+} from "@pixi/core";
+import { settings } from "./settings";
 
-export interface TextileOptions
-{
+export interface TextileOptions {
     TEXTILE_DIMEN: number;
     TEXTILE_UNITS: number;
     DO_CLEAR?: boolean;
@@ -13,6 +19,7 @@ type TextureTile = {
     x: number;
     y: number;
     baseTexture: BaseTexture;
+    tint: Float32Array;
 };
 
 // For some reason, ESLint goes mad with indentation in this file ^&^
@@ -28,8 +35,7 @@ type TextureTile = {
  *
  * @see settings.TEXTILE_UNITS
  */
-export class TextileResource extends Resource
-{
+export class TextileResource extends Resource {
     /** The base-texture that contains all the texture tiles. */
     public baseTexture: BaseTexture = null;
 
@@ -40,60 +46,60 @@ export class TextileResource extends Resource
     private _clearBuffer: Uint8Array = null;
 
     /**
-	 * @param options - This will default to the "settings" exported by @pixi/tilemap.
-	 * @param options.TEXTILE_DIMEN - The dimensions of each tile.
-	 * @param options.TEXTILE_UNITS - The number of texture tiles.
-	 */
-    constructor(options: TextileOptions = settings)
-    {
+     * @param options - This will default to the "settings" exported by @pixi/tilemap.
+     * @param options.TEXTILE_DIMEN - The dimensions of each tile.
+     * @param options.TEXTILE_UNITS - The number of texture tiles.
+     */
+    constructor(options: TextileOptions = settings) {
         super(
             options.TEXTILE_DIMEN * 2,
-            options.TEXTILE_DIMEN * Math.ceil(options.TEXTILE_UNITS / 2),
+            options.TEXTILE_DIMEN * Math.ceil(options.TEXTILE_UNITS / 2)
         );
 
-        const tiles: TextureTile[] = this.tiles = new Array(options.TEXTILE_UNITS);
+        const tiles: TextureTile[] = (this.tiles = new Array(
+            options.TEXTILE_UNITS
+        ));
 
         this.doClear = !!options.DO_CLEAR;
         this.tileDimen = options.TEXTILE_DIMEN;
 
-        for (let j = 0; j < options.TEXTILE_UNITS; j++)
-        {
+        for (let j = 0; j < options.TEXTILE_UNITS; j++) {
             tiles[j] = {
                 dirtyId: 0,
                 x: options.TEXTILE_DIMEN * (j & 1),
                 y: options.TEXTILE_DIMEN * (j >> 1),
                 baseTexture: Texture.WHITE.baseTexture,
+                tint: new Float32Array([1.0, 1.0, 1.0, 1.0]),
             };
         }
     }
 
     /**
-	 * Sets the texture to be uploaded for the given tile.
-	 *
-	 * @param index - The index of the tile being set.
-	 * @param texture - The texture with the base-texture to upload.
-	 */
-    tile(index: number, texture: BaseTexture): void
-    {
+     * Sets the texture to be uploaded for the given tile.
+     *
+     * @param index - The index of the tile being set.
+     * @param texture - The texture with the base-texture to upload.
+     */
+    tile(index: number, texture: BaseTexture): void {
         const tile = this.tiles[index];
 
-        if (tile.baseTexture === texture)
-        {
+        if (tile.baseTexture === texture) {
             return;
         }
 
         tile.baseTexture = texture;
+        // tile.tint = tint; // Store the tint
         this.baseTexture.update();
 
         this.tiles[index].dirtyId = (this.baseTexture as any).dirtyId;
     }
 
     /** @override */
-    bind(baseTexture: BaseTexture): void
-    {
-        if (this.baseTexture)
-        {
-            throw new Error('Only one baseTexture is allowed for this resource!');
+    bind(baseTexture: BaseTexture): void {
+        if (this.baseTexture) {
+            throw new Error(
+                "Only one baseTexture is allowed for this resource!"
+            );
         }
 
         this.baseTexture = baseTexture;
@@ -101,73 +107,92 @@ export class TextileResource extends Resource
     }
 
     /** @override */
-    upload(renderer: Renderer, texture: BaseTexture, glTexture: GLTexture): boolean
-    {
+    upload(
+        renderer: Renderer,
+        texture: BaseTexture,
+        glTexture: GLTexture
+    ): boolean {
         const { gl } = renderer;
         const { width, height } = this;
 
         gl.pixelStorei(
             gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,
-            texture.alphaMode === undefined || texture.alphaMode === ALPHA_MODES.UNPACK
+            texture.alphaMode === undefined ||
+                texture.alphaMode === ALPHA_MODES.UNPACK
         );
 
-        if (glTexture.dirtyId < 0)
-        {
+        if (glTexture.dirtyId < 0) {
             (glTexture as any).width = width;
             (glTexture as any).height = height;
 
-            gl.texImage2D(texture.target, 0,
+            gl.texImage2D(
+                texture.target,
+                0,
                 texture.format,
                 width,
                 height,
                 0,
                 texture.format,
                 texture.type,
-                null);
+                null
+            );
         }
 
         const doClear = this.doClear;
         const tiles = this.tiles;
 
-        if (doClear && !this._clearBuffer)
-        {
-            this._clearBuffer = new Uint8Array(settings.TEXTILE_DIMEN * settings.TEXTILE_DIMEN * 4);
+        if (doClear && !this._clearBuffer) {
+            this._clearBuffer = new Uint8Array(
+                settings.TEXTILE_DIMEN * settings.TEXTILE_DIMEN * 4
+            );
         }
 
-        for (let i = 0; i < tiles.length; i++)
-        {
+        for (let i = 0; i < tiles.length; i++) {
             const spr = tiles[i];
             const tex = spr.baseTexture;
 
-            if (glTexture.dirtyId >= this.tiles[i].dirtyId)
-            {
+            if (glTexture.dirtyId >= this.tiles[i].dirtyId) {
                 continue;
             }
 
             const res = tex.resource as any;
 
-            if (!tex.valid || !res || !res.source)
-            {
+            if (!tex.valid || !res || !res.source) {
                 continue;
             }
-            if (doClear && (tex.width < this.tileDimen || tex.height < this.tileDimen))
-            {
-                gl.texSubImage2D(texture.target, 0,
+            if (
+                doClear &&
+                (tex.width < this.tileDimen || tex.height < this.tileDimen)
+            ) {
+                gl.texSubImage2D(
+                    texture.target,
+                    0,
                     spr.x,
                     spr.y,
                     this.tileDimen,
                     this.tileDimen,
                     texture.format,
                     texture.type,
-                    this._clearBuffer);
+                    this._clearBuffer
+                );
             }
 
-            gl.texSubImage2D(texture.target, 0,
+            gl.texSubImage2D(
+                texture.target,
+                0,
                 spr.x,
                 spr.y,
                 texture.format,
                 texture.type,
-                res.source);
+                res.source
+            );
+
+            // apply the tint
+            // const tintColorLocation = gl.getUniformLocation(
+            //     renderer.shader,
+            //     "uTint"
+            // );
+            // gl.uniform4fv(tintColorLocation, spr.tint);
         }
 
         return true;
