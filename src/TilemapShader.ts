@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference, spaced-comment
 ///<reference path="../global.d.ts" />
 
-import * as shaderGenerator from './shaderGenerator';
+import * as shaderGenerator from "./shaderGenerator";
 
 const tilemapVertexTemplateSrc = `#version 100
 precision highp float;
@@ -12,6 +12,7 @@ attribute vec2 aAnim;
 attribute float aAnimDivisor;
 attribute float aTextureId;
 attribute float aAlpha;
+attribute vec4 aTint;
 
 uniform mat3 projTransMatrix;
 uniform vec2 animationFrame;
@@ -20,6 +21,7 @@ varying vec2 vTextureCoord;
 varying float vTextureId;
 varying vec4 vFrame;
 varying float vAlpha;
+varying vec4 vTint;
 
 void main(void)
 {
@@ -33,6 +35,7 @@ void main(void)
    vFrame = aFrame + vec4(animOffset, animOffset);
    vTextureId = aTextureId;
    vAlpha = aAlpha;
+   vTint = aTint;
 }
 `;
 
@@ -46,6 +49,7 @@ varying vec2 vTextureCoord;
 varying vec4 vFrame;
 varying float vTextureId;
 varying float vAlpha;
+varying vec4 vTint;
 uniform vec4 shadowColor;
 uniform sampler2D uSamplers[%count%];
 uniform vec2 uSamplerSize[%count%];
@@ -57,59 +61,59 @@ void main(void)
 
    vec4 color;
    %forloop%
-   gl_FragColor = color * vAlpha;
+   gl_FragColor = color * vAlpha * vTint;
 }
 `;
 
-import { Buffer, Geometry, Shader, Program, Matrix } from '@pixi/core';
+import { Buffer, Geometry, Shader, Program, Matrix } from "@pixi/core";
 
 // For some reason, ESLint goes mad with indentation in this file ^&^
 /* eslint-disable no-mixed-spaces-and-tabs, indent */
 
-export class TilemapShader extends Shader
-{
+export class TilemapShader extends Shader {
     maxTextures = 0;
 
-    constructor(maxTextures: number)
-    {
-	    super(
-	        new Program(
+    constructor(maxTextures: number) {
+        super(
+            new Program(
                 tilemapVertexTemplateSrc,
-                shaderGenerator.generateFragmentSrc(maxTextures, tilemapFragmentTemplateSrc)
+                shaderGenerator.generateFragmentSrc(
+                    maxTextures,
+                    tilemapFragmentTemplateSrc
+                )
             ),
-	        {
-	            animationFrame: new Float32Array(2),
-	            uSamplers: [],
-	            uSamplerSize: [],
-	            projTransMatrix: new Matrix()
-	        }
-	    );
+            {
+                animationFrame: new Float32Array(2),
+                uSamplers: [],
+                uSamplerSize: [],
+                projTransMatrix: new Matrix(),
+            }
+        );
 
-	    this.maxTextures = maxTextures;
-	    shaderGenerator.fillSamplers(this, this.maxTextures);
+        this.maxTextures = maxTextures;
+        shaderGenerator.fillSamplers(this, this.maxTextures);
     }
 }
 
-export class TilemapGeometry extends Geometry
-{
-    vertSize = 13;
+export class TilemapGeometry extends Geometry {
+    vertSize = 17;
     vertPerQuad = 4;
     stride = this.vertSize * 4;
     lastTimeAccess = 0;
 
-    constructor()
-    {
-	    super();
+    constructor() {
+        super();
 
-	    const buf = this.buf = new Buffer(new Float32Array(2), true, false);
+        const buf = (this.buf = new Buffer(new Float32Array(2), true, false));
 
-	    this.addAttribute('aVertexPosition', buf, 0, false, 0, this.stride, 0)
-	        .addAttribute('aTextureCoord', buf, 0, false, 0, this.stride, 2 * 4)
-	        .addAttribute('aFrame', buf, 0, false, 0, this.stride, 4 * 4)
-	        .addAttribute('aAnim', buf, 0, false, 0, this.stride, 8 * 4)
-	        .addAttribute('aTextureId', buf, 0, false, 0, this.stride, 10 * 4)
-            .addAttribute('aAnimDivisor', buf, 0, false, 0, this.stride, 11 * 4)
-            .addAttribute('aAlpha', buf, 0, false, 0, this.stride, 12 * 4);
+        this.addAttribute("aVertexPosition", buf, 0, false, 0, this.stride, 0)
+            .addAttribute("aTextureCoord", buf, 0, false, 0, this.stride, 2 * 4)
+            .addAttribute("aFrame", buf, 0, false, 0, this.stride, 4 * 4)
+            .addAttribute("aAnim", buf, 0, false, 0, this.stride, 8 * 4)
+            .addAttribute("aTextureId", buf, 0, false, 0, this.stride, 10 * 4)
+            .addAttribute("aAnimDivisor", buf, 0, false, 0, this.stride, 11 * 4)
+            .addAttribute("aAlpha", buf, 0, false, 0, this.stride, 12 * 4)
+            .addAttribute("aTint", buf, 0, false, 0, this.stride, 13 * 4);
     }
 
     buf: Buffer;
